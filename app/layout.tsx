@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Providers from "./providers";
-// @ts-expect-error Next.js processes global CSS imports at build time.
+// @ts-expect-error CSS is loaded by Next.js and has no TypeScript declarations.
 import "./globals.css";
 
 export const metadata: Metadata = {
