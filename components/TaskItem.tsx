@@ -18,7 +18,7 @@ export default function TaskItem({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
 
-  function handleToggle() {
+  async function handleToggle() {
     if (!isOwner) return;
 
     const previous = done;
@@ -27,35 +27,39 @@ export default function TaskItem({
     setDone(next);
     setError("");
 
-    fetch(`/api/groups/${groupId}/tasks/${task.id}`, {
+    const res = await fetch(`/api/groups/${groupId}/tasks/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ done: next }),
-    }).then((res) => {
-      if (!res.ok) {
-        setDone(previous);
-        setError("Failed to update task.");
-      }
     });
+
+    if (!res.ok) {
+      setDone(previous);
+      const isJson = res.headers.get("content-type")?.includes("application/json");
+      const data = isJson ? await res.json() : null;
+      setError(data?.error ?? `Failed to update task (status ${res.status}).`);
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!isOwner) return;
 
     setIsDeleting(true);
     setError("");
 
-    fetch(`/api/groups/${groupId}/tasks/${task.id}`, {
+    const res = await fetch(`/api/groups/${groupId}/tasks/${task.id}`, {
       method: "DELETE",
-    }).then((res) => {
-      if (!res.ok) {
-        setError("Failed to delete task.");
-        setIsDeleting(false);
-        return;
-      }
-
-      router.refresh();
     });
+
+    if (!res.ok) {
+      const isJson = res.headers.get("content-type")?.includes("application/json");
+      const data = isJson ? await res.json() : null;
+      setError(data?.error ?? `Failed to delete task (status ${res.status}).`);
+      setIsDeleting(false);
+      return;
+    }
+
+    router.refresh();
   }
 
   return (
